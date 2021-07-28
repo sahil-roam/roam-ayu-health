@@ -163,9 +163,11 @@ const App: () => React$Node = () => {
   const onToggleTracking = () => {
     Roam.isLocationTracking((status) => {
       if (status === 'ENABLED') {
+        Roam.stopPublishing();
         Roam.stopTracking();
       } else {
-        Roam.startTracking(Roam.TrackingMode.ACTIVE);
+        Roam.publishAndSave(null);
+        Roam.startTrackingTimeInterval(2, "HIGH");
       }
       Roam.isLocationTracking(setTrackingStatus);
     });
@@ -225,7 +227,7 @@ const App: () => React$Node = () => {
       return;
     }
 
-    Roam.subscribe(Roam.SubscribeListener.LOCATION, loadedUserId);
+    Roam.subscribe("LOCATION", loadedUserId);
     setSubscriptionStatus('Enabled');
   };
 
