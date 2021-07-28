@@ -13,11 +13,12 @@ import android.os.IBinder;
 
 import androidx.annotation.RequiresApi;
 
+import com.roam.reactnative.RNRoamReceiver;
 import com.roam.sdk.service.RoamReceiver;
 
 public class RoamForegroundService extends Service {
 
-    private RoamReceiver mLocationReceiver;
+    private RNRoamReceiver mLocationReceiver;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -46,7 +47,7 @@ public class RoamForegroundService extends Service {
     }
 
     private void register() {
-        mLocationReceiver = new RoamReceiver();
+        mLocationReceiver = new RNRoamReceiver();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction("com.roam.android.RECEIVED");
         registerReceiver(mLocationReceiver, intentFilter);
