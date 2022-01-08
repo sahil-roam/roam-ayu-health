@@ -67,7 +67,9 @@ const App: () => React$Node = () => {
         setInitialized(true);
       });
       // Default roam configuration
-      Roam.allowMockLocation(true);
+      if (Platform.OS === 'android') {
+        Roam.allowMockLocation(true);
+      }
       Roam.enableAccuracyEngine();
       Roam.isLocationTracking(setTrackingStatus);
       onCheckPermissions();
