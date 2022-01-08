@@ -30,8 +30,8 @@ static void InitializeFlipper(UIApplication *application) {
 {
 #ifdef FB_SONARKIT_ENABLED
   InitializeFlipper(application);
+  [Roam initialize:"4467f598e67e71c13fa2bb36efc028776ab2b33979f32a58edd885342e78dd3c" :NULL :NULL];
 #endif
-  
   RCTBridge *bridge = [[RCTBridge alloc] initWithDelegate:self launchOptions:launchOptions];
   RCTRootView *rootView = [[RCTRootView alloc] initWithBridge:bridge
                                                    moduleName:@"RoamExample"
@@ -54,7 +54,9 @@ static void InitializeFlipper(UIApplication *application) {
 - (NSURL *)sourceURLForBridge:(RCTBridge *)bridge
 {
 #if DEBUG
-  return [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index" fallbackResource:nil];
+  NSURL *jsUrl = [[RCTBundleURLProvider sharedSettings] jsBundleURLForBundleRoot:@"index" fallbackResource:nil];
+  [[RCTBundleURLProvider sharedSettings] setJsLocation:jsUrl.host];
+  return jsUrl;
 #else
   return [[NSBundle mainBundle] URLForResource:@"main" withExtension:@"jsbundle"];
 #endif

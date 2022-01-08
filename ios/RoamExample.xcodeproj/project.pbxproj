@@ -60,6 +60,7 @@
 		C734D5712B4B812A18B13A95 /* libPods-RoamExample.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RoamExample.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D807F8282789DAF4000B96CB /* RNRoam.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RNRoam.h; path = "../node_modules/roam-reactnative/ios/RNRoam.h"; sourceTree = "<group>"; };
 		D807F8292789DAF4000B96CB /* RNRoam.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RNRoam.m; path = "../node_modules/roam-reactnative/ios/RNRoam.m"; sourceTree = "<group>"; };
+		D8F240E32789F2B000A4034A /* RoamExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = RoamExample.entitlements; path = RoamExample/RoamExample.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		ED2971642150620600B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS12.0.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
 /* End PBXFileReference section */
@@ -118,6 +119,7 @@
 		13B07FAE1A68108700A75B9A /* RoamExample */ = {
 			isa = PBXGroup;
 			children = (
+				D8F240E32789F2B000A4034A /* RoamExample.entitlements */,
 				D807F8282789DAF4000B96CB /* RNRoam.h */,
 				D807F8292789DAF4000B96CB /* RNRoam.m */,
 				008F07F21AC5B25A0029DE68 /* main.jsbundle */,
@@ -661,6 +663,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = RoamExample/RoamExample.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = B92BAJFGJP;
 				ENABLE_BITCODE = NO;
@@ -686,6 +689,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = RoamExample/RoamExample.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = B92BAJFGJP;
 				INFOPLIST_FILE = RoamExample/Info.plist;
