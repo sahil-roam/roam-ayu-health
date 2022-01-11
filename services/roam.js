@@ -33,6 +33,21 @@ const createTestUser = async () => {
   });
 };
 
+const createTestTrip = async () => {
+  return new Promise((resolve, reject) => {
+    const handleCreateTripCallback = async success => {
+      AsyncStorage.setItem('tripId', success.id);
+      resolve(success.id);
+    };
+
+    const handleCreateTripError = error => {
+      reject(error);
+    };
+
+    Roam.createTrip(false, handleCreateTripCallback, handleCreateTripError);
+  });
+};
+
 const loadTestUser = async (id) => {
   return new Promise((resolve, reject) => {
     const handleLoadUserCallback = async (success) => {
@@ -46,4 +61,50 @@ const loadTestUser = async (id) => {
   });
 };
 
-export const roam = {createTestUser, loadTestUser, Configuration, ErrorCodes};
+const toggleTrip = async (id) => {
+  return new Promise((resolve, reject) => {
+    const handleLoadTripCallback = async (success) => {
+      console.log(success);
+      resolve('STARTED');
+    };
+
+    const handleLoadTripError = (error) => {
+      console.log(error);
+      reject(error);
+    };
+    Roam.startTrip(
+      id,
+      'test-trip',
+      handleLoadTripCallback,
+      handleLoadTripError,
+    );
+  });
+};
+
+const getTripSummary = async id => {
+  return new Promise((resolve, reject) => {
+    const handleGetTripSummaryCallback = async success => {
+      resolve(success);
+    };
+
+    const handleGetTripSummaryError = error => {
+      console.log(error);
+      reject(error);
+    };
+    Roam.getTripSummary(
+      id,
+      handleGetTripSummaryCallback,
+      handleGetTripSummaryError,
+    );
+  });
+};
+
+export const roam = {
+  createTestUser,
+  createTestTrip,
+  loadTestUser,
+  toggleTrip,
+  getTripSummary,
+  Configuration,
+  ErrorCodes,
+};

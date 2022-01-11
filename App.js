@@ -34,13 +34,23 @@ const App: () => React$Node = () => {
   const appStateRef = useRef(AppState.currentState);
   const [initialized, setInitialized] = useState(false);
   const [userId, setUserId] = useState();
+  const [tripId, setTripId] = useState();
   const [loadedUserId, setLoadedUserId] = useState();
   const [trackingStatus, setTrackingStatus] = useState();
+  const [tripTrackingStatus, setTripTrackingStatus] = useState('Unknown');
   const [eventStatus, setEventStatus] = useState('Unknown');
   const [listenerStatus, setListenerStatus] = useState('Unknown');
   const [subscriptionStatus, setSubscriptionStatus] = useState('-');
+  const [tripSubscriptionStatus, setTripSubscriptionStatus] = useState('-');
+  const [tripSummaryStatus, setTripSummaryStatus] = useState('-');
+  const [distanceCovered, setDistanceCovered] = useState('-');
+  const [duration, setDuration] = useState('-');
+  const [elevationGain, setElevationGain] = useState('-');
+  const [routeCount, setRouteCount] = useState('-');
   const [listenUpdatesStatus, setListenUpdatesStatus] = useState('-');
+  const [listenUpdatesTripStatus, setTripListenUpdatesStatus] = useState('-');
   const [updateCoutner, setUpdateCounter] = useState(0);
+  const [tripUpdateCoutner, setTripUpdateCounter] = useState(0);
 
   // Permissions
   const [permissions, setPermissions] = useReducer(
@@ -55,15 +65,20 @@ const App: () => React$Node = () => {
       backgroundLocationNeeded: null,
       locationServicesNeeded: null,
     },
-    (state) => state,
+    state => state,
   );
 
   //Initial configuration
   useEffect(() => {
     if (!initialized) {
       //Get stored userId
-      AsyncStorage.getItem('userId').then((savedId) => {
+      AsyncStorage.getItem('userId').then(savedId => {
         setUserId(savedId);
+        setInitialized(true);
+      });
+      //Get stored userId
+      AsyncStorage.getItem('tripId').then(savedId => {
+        setTripId(savedId);
         setInitialized(true);
       });
       // Default roam configuration
@@ -74,11 +89,11 @@ const App: () => React$Node = () => {
       Roam.isLocationTracking(setTrackingStatus);
       onCheckPermissions();
     }
-  }, [initialized, onCheckPermissions]);
+  }, [initialized, onCheckPermissions, setUserId, setTripId]);
 
   // Refresh permissions on app state change
   useEffect(() => {
-    const handleAppStateChange = (nextAppState) => {
+    const handleAppStateChange = nextAppState => {
       if (
         appStateRef.current.match(/inactive|background/) &&
         nextAppState === 'active'
@@ -98,18 +113,41 @@ const App: () => React$Node = () => {
     roam.createTestUser().then(setUserId);
   };
 
+  const onGetTripSummaryPress = () => {
+    const handleGetTripSummaryCallback = async success => {
+      setTripSummaryStatus('SUCCESS');
+      setDistanceCovered(success.distanceCovered);
+      setDuration(success.duration);
+      setElevationGain(success.elevationGain);
+      setRouteCount(success.route.length);
+    };
+
+    const handleGetTripSummaryError = error => {
+      setTripSummaryStatus('ERROR');
+    };
+    Roam.getTripSummary(
+      tripId,
+      handleGetTripSummaryCallback,
+      handleGetTripSummaryError,
+    );
+  };
+
+  const onCreateTripPress = () => {
+    roam.createTestTrip().then(setTripId);
+  };
+
   const onLoadTestUser = () => {
     roam
       .loadTestUser(userId)
       .then(setLoadedUserId)
-      .catch((error) => {
+      .catch(error => {
         if (error === roam.ErrorCodes.InvalidUserId) {
           Alert.alert('Invalid user id', 'Please create a test user before');
         }
       });
   };
 
-  const onRequestPermission = (type) => {
+  const onRequestPermission = type => {
     switch (type) {
       case 'location':
         Roam.requestLocationPermission();
@@ -147,32 +185,66 @@ const App: () => React$Node = () => {
       });
     }
 
-    Roam.checkLocationPermission((location) => {
+    Roam.checkLocationPermission(location => {
       setPermissions({location});
     });
     if (locationServicesNeeded) {
-      Roam.checkLocationServices((locationServices) => {
+      Roam.checkLocationServices(locationServices => {
         setPermissions({locationServices});
       });
     }
     if (backgroundLocationNeeded) {
-      Roam.checkBackgroundLocationPermission((backgroundLocation) => {
+      Roam.checkBackgroundLocationPermission(backgroundLocation => {
         setPermissions({backgroundLocation});
       });
     }
   }, [permissions]);
 
   const onToggleTracking = () => {
-    Roam.isLocationTracking((status) => {
-      if (status === 'ENABLED') {
+    Roam.isLocationTracking(status => {
+      if (status === 'GRANTED') {
         Roam.stopPublishing();
         Roam.stopTracking();
+        setTrackingStatus('DENIED');
       } else {
         Roam.publishAndSave(null);
-        Roam.startTrackingTimeInterval(2, "HIGH");
+        if (Platform.OS === 'android') {
+          Roam.startTrackingTimeInterval(2, 'HIGH');
+        } else {
+          Roam.startTrackingCustom(
+            true,
+            true,
+            Roam.ActivityType.FITNESS,
+            Roam.DesiredAccuracyIOS.BEST,
+            true,
+            10,
+            10,
+            10,
+          );
+        }
+        setTrackingStatus('GRANTED');
       }
-      Roam.isLocationTracking(setTrackingStatus);
     });
+  };
+
+  const onToggleTrip = () => {
+    if (typeof tripId === 'undefined') {
+      Alert.alert('Invalid trip id', 'Please create a test trip before');
+      return;
+    }
+    if (tripTrackingStatus === 'STARTED') {
+      Alert.alert('Trip already started', 'Please create a test trip before');
+      return;
+    }
+    console.log('Trip Started');
+    roam
+      .toggleTrip(tripId)
+      .then(setTripTrackingStatus)
+      .catch(error => {
+        if (error === roam.ErrorCodes.InvalidUserId) {
+          Alert.alert('Invalid trip id', 'Please create a test trip before');
+        }
+      });
   };
 
   const enableEvents = () => {
@@ -194,7 +266,7 @@ const App: () => React$Node = () => {
           locationEvents && tripsEvents ? 'Enabled' : 'Disabled';
         setEventStatus(statusText);
       },
-      (error) => {
+      () => {
         setEventStatus('Error');
       },
     );
@@ -217,7 +289,7 @@ const App: () => React$Node = () => {
             : 'Disabled';
         setListenerStatus(statusText);
       },
-      (error) => {
+      () => {
         setListenerStatus('Error');
       },
     );
@@ -229,8 +301,17 @@ const App: () => React$Node = () => {
       return;
     }
 
-    Roam.subscribe("LOCATION", loadedUserId);
+    Roam.subscribe('LOCATION', loadedUserId);
     setSubscriptionStatus('Enabled');
+  };
+  const onSubscribeTrip = () => {
+    if (typeof tripId === 'undefined') {
+      Alert.alert('Invalid trip id', 'Please create a test trip before');
+      return;
+    }
+
+    Roam.subscribeTripStatus(tripId);
+    setTripSubscriptionStatus('Enabled');
   };
 
   const onListenUpdates = () => {
@@ -238,11 +319,23 @@ const App: () => React$Node = () => {
       Alert.alert('Error', 'Please, subscribe location before');
       return;
     }
-    Roam.startListener('location', (location) => {
+    Roam.startListener('location', location => {
       console.log('Location', location);
-      setUpdateCounter((count) => count + 1);
+      setUpdateCounter(count => count + 1);
     });
     setListenUpdatesStatus('Enabled');
+  };
+
+  const onListenTripUpdates = () => {
+    if (subscriptionStatus !== 'Enabled') {
+      Alert.alert('Error', 'Please, subscribe trip before');
+      return;
+    }
+    Roam.startListener('trip_status', tripLocation => {
+      console.log('Location', tripLocation);
+      setTripUpdateCounter(count => count + 1);
+    });
+    setTripListenUpdatesStatus('Enabled');
   };
 
   if (!initialized) {
@@ -330,6 +423,45 @@ const App: () => React$Node = () => {
           <View style={styles.sectionContainer}>
             <Text style={styles.counter}>
               Location updates: {updateCoutner}
+            </Text>
+          </View>
+          <View style={styles.sectionContainer}>
+            <Text style={styles.title}>Trips</Text>
+            <View style={styles.row}>
+              <Button onPress={onCreateTripPress}>Create test trip</Button>
+              <TextField>
+                {typeof tripId === 'undefined' ? 'Empty' : tripId}
+              </TextField>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={onSubscribeTrip}>Subscribe Trip</Button>
+              <TextField>{tripSubscriptionStatus}</TextField>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={onListenTripUpdates}>Listen trip</Button>
+              <TextField>{listenUpdatesTripStatus}</TextField>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={onToggleTrip}>Toggle Trip</Button>
+              <TextField>{tripTrackingStatus}</TextField>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={onGetTripSummaryPress}>Get trip summary</Button>
+              <TextField>{tripSummaryStatus}</TextField>
+            </View>
+          </View>
+          <View style={styles.sectionContainer}>
+            <Text style={styles.counter}>
+              Trip updates: {tripUpdateCoutner}
+            </Text>
+          </View>
+          <View style={styles.sectionContainer}>
+            <Text style={styles.counter}>
+              Trip Summary
+              {'\n'}Distance Covered: {distanceCovered}
+              {'\n'}Duration: {duration}
+              {'\n'}Elevation Gain: {elevationGain}
+              {'\n'}Route Count: {routeCount}
             </Text>
           </View>
         </ScrollView>
