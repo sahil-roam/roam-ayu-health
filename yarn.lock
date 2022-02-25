@@ -5856,10 +5856,10 @@
   "resolved" "https://registry.npmjs.org/rimraf/-/rimraf-2.2.8.tgz"
   "version" "2.2.8"
 
-"roam-reactnative@^0.0.18":
-  "integrity" "sha512-riqp4QaWA32+IkeQ05mSH/l9bq8EYARXq6JUTv8go9NDnSVoAhIOdBJAm+yevVJT3SAbGVAavYLIfkvAGvdKMw=="
-  "resolved" "https://registry.npmjs.org/roam-reactnative/-/roam-reactnative-0.0.18.tgz"
-  "version" "0.0.18"
+"roam-reactnative@^0.0.21":
+  "integrity" "sha512-lOoeTHUE2EmbqNvoH0bJqzlo4j5Fx/8THnxC8mAwCOpQmYMdy4dzJqEDYHAhocTUyyrIGzpB4JQ5Y6k2AH8y2A=="
+  "resolved" "https://registry.npmjs.org/roam-reactnative/-/roam-reactnative-0.0.21.tgz"
+  "version" "0.0.21"
   dependencies:
     "typescript" "^4.2.4"
 

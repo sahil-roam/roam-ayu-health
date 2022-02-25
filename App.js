@@ -211,19 +211,20 @@ const App: () => React$Node = () => {
       } else {
         Roam.publishAndSave(null);
         if (Platform.OS === 'android') {
-          Roam.startTrackingTimeInterval(2, 'HIGH');
+          Roam.startTrackingDistanceInterval(10, 10, Roam.DesiredAccuracy.HIGH);
         } else {
           Roam.startTrackingCustom(
             true,
-            true,
+            false,
             Roam.ActivityType.FITNESS,
             Roam.DesiredAccuracyIOS.BEST,
             true,
             10,
             10,
-            10,
+            0
           );
         }
+        Roam.updateLocationWhenStationary(10)
         setTrackingStatus('GRANTED');
       }
     });
