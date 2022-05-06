@@ -88,7 +88,15 @@ const App: () => React$Node = () => {
       Roam.enableAccuracyEngine();
       Roam.isLocationTracking(setTrackingStatus);
       onCheckPermissions();
-    }
+    } 
+      Roam.setBatchReceiverConfig(Roam.NetworkState.BOTH, 4, 10,
+        success => {
+          console.log(JSON.stringify(success))
+        },
+        error => {
+          console.log(JSON.stringify(error))
+        })
+   
   }, [initialized, onCheckPermissions, setUserId, setTripId]);
 
   // Refresh permissions on app state change
@@ -202,16 +210,27 @@ const App: () => React$Node = () => {
   }, [permissions]);
 
   const onToggleTracking = () => {
+    Roam.getBatchReceiverConfig(
+      success => {
+        console.log(JSON.stringify(success))
+      },
+      error => {
+        console.log(JSON.stringify(error))
+      }
+    )
     Roam.isLocationTracking(status => {
       console.log(`status: ${status}`)
       if (status === 'ENABLED') {
         Roam.stopPublishing();
         Roam.stopTracking();
+        Roam.stopListener('location');
         setTrackingStatus('DENIED');
       } else {
         Roam.publishAndSave(null);
+        Roam.offlineLocationTracking(false)
         if (Platform.OS === 'android') {
-          Roam.startTrackingDistanceInterval(10, 10, Roam.DesiredAccuracy.HIGH);
+          Roam.startTrackingTimeInterval(5, Roam.DesiredAccuracy.HIGH)
+          //Roam.startTrackingDistanceInterval(10, 10, Roam.DesiredAccuracy.HIGH);
         } else {
           Roam.startTrackingCustom(
             true,
@@ -324,9 +343,12 @@ const App: () => React$Node = () => {
       Alert.alert('Error', 'Please, subscribe location before');
       return;
     }
-    Roam.startListener('location', location => {
-      console.log('Location', location);
-      setUpdateCounter(count => count + 1);
+    Roam.startListener('location', locations => {
+      locations.map((location) => {
+        console.log(JSON.stringify(location))
+      })
+      //console.log('Location', location);
+      setUpdateCounter(count => count + locations.length);
     });
     setListenUpdatesStatus('Enabled');
   };
