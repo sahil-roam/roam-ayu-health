@@ -224,6 +224,12 @@ const App: () => React$Node = () => {
         Roam.stopPublishing();
         Roam.stopTracking();
         Roam.stopListener('location');
+        Roam.resetBatchReceiverConfig(success => {
+          console.log(JSON.stringify(success))
+        },
+        error => {
+          console.log(JSON.stringify(error))
+        })
         setTrackingStatus('DENIED');
       } else {
         Roam.publishAndSave(null);
