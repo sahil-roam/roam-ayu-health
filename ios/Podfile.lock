@@ -339,12 +339,14 @@ PODS:
     - React-perflogger (= 0.66.4)
   - RNCAsyncStorage (1.12.1):
     - React-Core
+  - RNCCheckbox (0.5.12):
+    - React-Core
   - RNDeviceInfo (8.4.8):
     - React-Core
-  - RNRoam (0.0.26):
+  - RNRoam (0.0.36):
     - React
-    - roam-ios (= 0.0.21)
-  - roam-ios (0.0.21)
+    - roam-ios (= 0.0.27)
+  - roam-ios (0.0.27)
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
     - Yoga (~> 1.14)
@@ -403,6 +405,7 @@ DEPENDENCIES:
   - React-runtimeexecutor (from `../node_modules/react-native/ReactCommon/runtimeexecutor`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-community/async-storage`)"
+  - "RNCCheckbox (from `../node_modules/@react-native-community/checkbox`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNRoam (from `../node_modules/roam-reactnative`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
@@ -486,6 +489,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-community/async-storage"
+  RNCCheckbox:
+    :path: "../node_modules/@react-native-community/checkbox"
   RNDeviceInfo:
     :path: "../node_modules/react-native-device-info"
   RNRoam:
@@ -537,9 +542,10 @@ SPEC CHECKSUMS:
   React-runtimeexecutor: dec32ee6f2e2a26e13e58152271535fadff5455a
   ReactCommon: 57b69f6383eafcbd7da625bfa6003810332313c4
   RNCAsyncStorage: b03032fdbdb725bea0bd9e5ec5a7272865ae7398
+  RNCCheckbox: ed1b4ca295475b41e7251ebae046360a703b6eb5
   RNDeviceInfo: 0400a6d0c94186d1120c3cbd97b23abc022187a9
-  RNRoam: 757fe045e574f664fd063e8f85190b12767d8fd1
-  roam-ios: 5347a6c2107c7a6204a29cc085dcdff0ace04da8
+  RNRoam: c99a465b04770a385438046763c8a700b438a360
+  roam-ios: 8626d4b6969f6a05e7aecb4019aaf529df82e32c
   Yoga: e7dc4e71caba6472ff48ad7d234389b91dadc280
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 

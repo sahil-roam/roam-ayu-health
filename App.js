@@ -23,11 +23,14 @@ import {
   Alert,
   AppState,
   Platform,
+  TextInput
 } from 'react-native';
 
 import Roam from 'roam-reactnative';
 import {Button, TextField, Loader} from './components';
 import {roam} from './services';
+import { RadioGroup } from 'react-native-radio-buttons-group';
+import CheckBox from '@react-native-community/checkbox';
 
 const App: () => React$Node = () => {
   //States
@@ -89,13 +92,19 @@ const App: () => React$Node = () => {
       Roam.isLocationTracking(setTrackingStatus);
       onCheckPermissions();
     } 
-      Roam.setBatchReceiverConfig(Roam.NetworkState.BOTH, 4, 10,
-        success => {
-          console.log(JSON.stringify(success))
-        },
-        error => {
-          console.log(JSON.stringify(error))
-        })
+    Roam.resetBatchReceiverConfig(success => {
+      console.log(JSON.stringify(success))
+    },
+    error => {
+      console.log(JSON.stringify(error))
+    })
+      // Roam.setBatchReceiverConfig(Roam.NetworkState.BOTH, 4, 10,
+      //   success => {
+      //     console.log(JSON.stringify(success))
+      //   },
+      //   error => {
+      //     console.log(JSON.stringify(error))
+      //   })
    
   }, [initialized, onCheckPermissions, setUserId, setTripId]);
 
@@ -209,51 +218,68 @@ const App: () => React$Node = () => {
     }
   }, [permissions]);
 
-  const onToggleTracking = () => {
-    Roam.getBatchReceiverConfig(
-      success => {
-        console.log(JSON.stringify(success))
-      },
-      error => {
-        console.log(JSON.stringify(error))
-      }
-    )
-    Roam.isLocationTracking(status => {
-      console.log(`status: ${status}`)
-      if (status === 'ENABLED') {
-        Roam.stopPublishing();
-        Roam.stopTracking();
-        Roam.stopListener('location');
-        Roam.resetBatchReceiverConfig(success => {
-          console.log(JSON.stringify(success))
-        },
-        error => {
-          console.log(JSON.stringify(error))
-        })
-        setTrackingStatus('DENIED');
-      } else {
-        Roam.publishAndSave(null);
-        Roam.offlineLocationTracking(false)
-        if (Platform.OS === 'android') {
-          Roam.startTrackingTimeInterval(5, Roam.DesiredAccuracy.HIGH)
-          //Roam.startTrackingDistanceInterval(10, 10, Roam.DesiredAccuracy.HIGH);
-        } else {
-          Roam.startTrackingCustom(
-            true,
-            false,
-            Roam.ActivityType.FITNESS,
-            Roam.DesiredAccuracyIOS.BEST,
-            true,
-            10,
-            10,
-            0
-          );
+  
+
+  const startTracking = () => {
+    Roam.publishAndSave(null);
+        Roam.offlineLocationTracking(true)
+        switch(trackingMode){
+
+          case 'ACTIVE':
+            Roam.startTracking(Roam.TrackingMode.ACTIVE)
+            break;
+
+            case 'BALANCED':
+              Roam.startTracking(Roam.TrackingMode.BALANCED)
+            break;
+
+            case 'PASSIVE':
+              Roam.startTracking(Roam.TrackingMode.PASSIVE)
+            break;
+
+            case 'TIME':
+              if(Platform.OS === 'ios'){
+                Roam.startTrackingCustom(
+                  true,
+                  false,
+                  Roam.ActivityType.FITNESS,
+                  Roam.DesiredAccuracyIOS.BEST,
+                  true,
+                  0,
+                  50,
+                  parseInt(timeInterval)
+                )
+              } else {
+                Roam.startTrackingTimeInterval(parseInt(timeInterval), Roam.DesiredAccuracy.HIGH)
+              }
+            break;
+
+            case 'DISTANCE':
+              if(Platform.OS === 'ios'){
+                Roam.startTrackingCustom(
+                  true,
+                  false,
+                  Roam.ActivityType.FITNESS,
+                  Roam.DesiredAccuracyIOS.BEST,
+                  true,
+                  parseInt(distanceInterval),
+                  50,
+                  0
+                )
+              } else {
+                Roam.startTrackingDistanceInterval(parseInt(distanceInterval), 20, Roam.DesiredAccuracy.HIGH)
+              }
+            break;
+
         }
-        Roam.updateLocationWhenStationary(10)
-        setTrackingStatus('GRANTED');
-      }
-    });
-  };
+
+  }
+
+
+  const stopTracking = () => {
+    Roam.stopPublishing();
+        Roam.stopTracking();
+  }
 
   const onToggleTrip = () => {
     if (typeof tripId === 'undefined') {
@@ -355,9 +381,77 @@ const App: () => React$Node = () => {
       })
       //console.log('Location', location);
       setUpdateCounter(count => count + locations.length);
+      setCurrentLocation(JSON.stringify(locations))
     });
     setListenUpdatesStatus('Enabled');
   };
+
+  const trackingSourceRadioData = [{
+    id: '1',
+    label: 'ALL',
+    value: 'ALL'
+  },{
+    id: '2',
+    label: 'LAST_KNOWN',
+    value: 'LAST_KNOWN'
+  },{
+    id: '3',
+    label: 'GPS',
+    value: 'GPS'
+  }]
+
+  const [sourceRadioButtons, setSourceRadioButtons] = useState(trackingSourceRadioData)
+  const [discardLocation, setDiscardLocation] = useState(true)
+  const [trackingConfigResponse, setTrackingConfigResponse] = useState('')
+  const [trackingAccuracy, setTrackingAccuracy] = useState('10')
+  const [trackingTimeout, setTrackingTimeout] = useState('10')
+  const [selectedSource, setSelectedSource] = useState({value: 'ALL'})
+  const [trackingMode, setTrackingMode] = useState('ACTIVE')
+  const [timeInterval, setTimeInterval] = useState('5')
+  const [distanceInterval, setDistanceInterval] = useState('10')
+
+  const setTrackingConfig = (accuracy, timeout, discardLocation, source) => {
+    console.log(`accuracy: ${accuracy} timeout: ${timeout} discardLocation: ${discardLocation} source: ${source}`)
+    if(Platform.OS === 'android'){
+      Roam.setTrackingConfig(parseInt(accuracy), parseInt(timeout), source, discardLocation, success => {
+        console.log(JSON.stringify(success))
+        setTrackingConfigResponse(JSON.stringify(success))
+      }, error => {
+        console.log(JSON.stringify(error))
+        setTrackingConfigResponse(JSON.stringify(error))
+      })
+    } else {
+      Roam.setTrackingConfig(parseInt(accuracy), parseInt(timeout), null, discardLocation, success => {
+        console.log(JSON.stringify(success))
+        setTrackingConfigResponse(JSON.stringify(success))
+      }, error => {
+        console.log(JSON.stringify(error))
+        setTrackingConfigResponse(JSON.stringify(error))
+      })
+    }
+  }
+
+  const getTrackingConfig = () => {
+    Roam.getTrackingConfig(success => {
+      console.log(JSON.stringify(success))
+      setTrackingConfigResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setTrackingConfigResponse(JSON.stringify(error))
+    })
+  }
+
+
+
+  const resetTrackingConfig = () => {
+    Roam.resetTrackingConfig(success => {
+      console.log(JSON.stringify(success))
+      setTrackingConfigResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setTrackingConfigResponse(JSON.stringify(error))
+    })
+  }
 
   const onListenTripUpdates = () => {
     if (tripSubscriptionStatus !== 'Enabled') {
@@ -372,6 +466,45 @@ const App: () => React$Node = () => {
     });
     setTripListenUpdatesStatus('Enabled');
   };
+
+  const [currentLocation, setCurrentLocation] = useState('')
+
+  const updateCurrentLocation = () => {
+    Roam.startListener('location', locations => {
+      console.log(JSON.stringify(locations))
+      setCurrentLocation(JSON.stringify(locations))
+    })
+    if(Platform.OS === 'android'){
+      Roam.updateCurrentLocation(Roam.DesiredAccuracy.HIGH, 50)
+    } else {
+      Roam.updateCurrentLocationIos(50)
+    }
+  }
+
+  const getCurrentLocation = () => {
+    if(Platform.OS === 'android'){
+      Roam.getCurrentLocation(Roam.DesiredAccuracy.HIGH, 50, success => {
+        console.log(JSON.stringify(success))
+        setCurrentLocation(JSON.stringify(success))
+      }, error => {
+        console.log(JSON.stringify(error))
+        setCurrentLocation(JSON.stringify(error))
+      })
+    } else {
+      Roam.getCurrentLocationIos(50, success => {
+        console.log(JSON.stringify(success))
+        setCurrentLocation(JSON.stringify(success))
+      }, error => {
+        console.log(JSON.stringify(error))
+        setCurrentLocation(JSON.stringify(error))
+      })
+    }
+  }
+
+  function onPressSourceRadioButton(radioButtonArray){
+    setSourceRadioButtons(radioButtonArray)
+    setSelectedSource(radioButtonArray.find(e => e.selected === true))
+  }
 
   if (!initialized) {
     return <Loader />;
@@ -433,6 +566,75 @@ const App: () => React$Node = () => {
             </View>
           </View>
           <View style={styles.sectionContainer}>
+          <Text style={styles.title}>Tracking Config</Text>
+          <View style={styles.row}>
+          <Text style={styles.sectionDescription}>Accuracy: </Text>
+          <TextInput
+          style={styles.input}
+          placeholder="Accuracy"
+          value={trackingAccuracy}
+          onChangeText={(newValue) => setTrackingAccuracy(newValue)}
+          />
+          </View>
+          <View style={styles.row}>
+          <Text style={styles.sectionDescription}>Timeout: </Text>
+          <TextInput
+          style={styles.input}
+          placeholder="Timeout"
+          value={trackingTimeout}
+          onChangeText={(value) => setTrackingTimeout(value)}
+          />
+          </View>
+          {
+            Platform.OS === 'android'
+            ? <RadioGroup
+            radioButtons={sourceRadioButtons}
+            onPress={onPressSourceRadioButton}
+            layout='row'
+            />
+            : <View/>
+          }
+          <View style={styles.row}>
+          <CheckBox
+          disabled={false}
+          value={discardLocation}
+          onValueChange={(newValue) => setDiscardLocation(newValue)}
+          />
+          <Text style={styles.sectionDescription}>Discard Location</Text>
+          </View>
+          <Button onPress={() => setTrackingConfig(trackingAccuracy, trackingTimeout, discardLocation, selectedSource.value)}>Set Tracking Config</Button>
+          <Button onPress={() => getTrackingConfig()}>Get Tracking Config</Button>
+          <Button onPress={() => resetTrackingConfig()}>Reset Tracking Config</Button>
+          <Text style={styles.counter}>Response: {trackingConfigResponse}</Text>
+          </View>
+
+          <View style={styles.sectionContainer}>
+          <Text style={styles.title}>Tracking Mode</Text>
+          <Text style={styles.counter}>Current Tracking Mode: {trackingMode}</Text>
+          <Button onPress={() => {setTrackingMode('ACTIVE')}}>ACTIVE</Button>
+          <Button onPress={() => {setTrackingMode('BALANCED')}}>BALANCED</Button>
+          <Button onPress={() => {setTrackingMode('PASSIVE')}}>PASSIVE</Button>
+          <View style={styles.row}>
+              <Button onPress={() => {
+                setTrackingMode('TIME')
+              }}>TIME</Button>
+              <TextInput 
+              style={styles.input}
+              value={timeInterval}
+              onChangeText={(value) => setTimeInterval(value)}
+              />
+            </View>
+            <View style={styles.row}>
+              <Button onPress={() => {setTrackingMode('DISTANCE')}}>DISTANCE</Button>
+              <TextInput 
+              style={styles.input}
+              value={distanceInterval}
+              onChangeText={(value) => setDistanceInterval(value)}
+              />
+            </View>
+          </View>
+          
+          <View style={styles.sectionContainer}>
             <Text style={styles.title}>Actions</Text>
             <View style={styles.row}>
               <Button onPress={enableEvents}>Enable Events</Button>
@@ -450,14 +652,22 @@ const App: () => React$Node = () => {
               <Button onPress={onListenUpdates}>Listen updates</Button>
               <TextField>{listenUpdatesStatus}</TextField>
             </View>
-            <View style={styles.row}>
-              <Button onPress={onToggleTracking}>Toggle Tracking</Button>
-              <TextField>{trackingStatus}</TextField>
-            </View>
+           
+              <Button onPress={() => startTracking()}>Start Tracking</Button>
+              <Button onPress={() => stopTracking()}>Stop Tracking</Button>
+           
           </View>
           <View style={styles.sectionContainer}>
             <Text style={styles.counter}>
               Location updates: {updateCoutner}
+            </Text>
+          </View>
+          <View style={styles.sectionContainer}>
+          <Text style={styles.title}>Current Location</Text>
+          <Button onPress={() => getCurrentLocation()}>Get currrent location</Button>
+          <Button onPress={() => updateCurrentLocation()}>Update currrent location</Button>
+          <Text style={styles.counter}>
+              Location : {currentLocation}
             </Text>
           </View>
           <View style={styles.sectionContainer}>
@@ -547,6 +757,19 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: 'red',
+  },
+  input: {
+    alignSelf: 'center',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    borderColor: 'gray',
+    borderWidth: 1,
+    fontSize: 18,
+    padding: 5,
+    margin: 10,
+    flex: 1,
+    fontWeight: 'bold',
+    borderRadius: 5
   },
 });
 

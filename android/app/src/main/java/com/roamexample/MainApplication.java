@@ -46,7 +46,7 @@ public class MainApplication extends Application implements ReactApplication {
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
-    Roam.initialize(this, "publishable_key");
+    Roam.initialize(this, "your-publishable-key");
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
   }
 
