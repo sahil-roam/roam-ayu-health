@@ -275,6 +275,10 @@ const App: () => React$Node = () => {
 
   }
 
+  const updateStationaryInterval = () => {
+    console.log(`stationary interval: ${stationaryInterval}`)
+    Roam.updateLocationWhenStationary(parseInt(stationaryInterval))
+  }
 
   const stopTracking = () => {
     Roam.stopPublishing();
@@ -409,6 +413,8 @@ const App: () => React$Node = () => {
   const [trackingMode, setTrackingMode] = useState('ACTIVE')
   const [timeInterval, setTimeInterval] = useState('5')
   const [distanceInterval, setDistanceInterval] = useState('10')
+  const [stationaryInterval, setStationaryInterval] = useState('0')
+  
 
   const setTrackingConfig = (accuracy, timeout, discardLocation, source) => {
     console.log(`accuracy: ${accuracy} timeout: ${timeout} discardLocation: ${discardLocation} source: ${source}`)
@@ -661,6 +667,19 @@ const App: () => React$Node = () => {
             <Text style={styles.counter}>
               Location updates: {updateCoutner}
             </Text>
+          </View>
+          <View style={styles.sectionContainer}>
+          <Text style={styles.title}>Stationary Interval</Text>
+          <View style={styles.row}>
+              <Button onPress={() => {
+                updateStationaryInterval()
+              }}>UPDATE</Button>
+              <TextInput 
+              style={styles.input}
+              value={stationaryInterval}
+              onChangeText={(value) => setStationaryInterval(value)}
+              />
+            </View>
           </View>
           <View style={styles.sectionContainer}>
           <Text style={styles.title}>Current Location</Text>

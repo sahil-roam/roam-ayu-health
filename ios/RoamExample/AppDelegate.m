@@ -29,7 +29,7 @@ static void InitializeFlipper(UIApplication *application) {
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-  [Roam initialize:@"your-publishable-key" :NULL :NULL];
+  [Roam initialize:@"f2fd4be8cf8439fdc166f498de4cbbdd35c847db1ed06bf1a67cf3e21e6a9550" :NULL :NULL];
 #ifdef FB_SONARKIT_ENABLED
   InitializeFlipper(application);
   

@@ -343,10 +343,10 @@ PODS:
     - React-Core
   - RNDeviceInfo (8.4.8):
     - React-Core
-  - RNRoam (0.0.36):
+  - RNRoam (0.0.37):
     - React
-    - roam-ios (= 0.0.27)
-  - roam-ios (0.0.27)
+    - roam-ios (= 0.0.28)
+  - roam-ios (0.0.28)
   - Yoga (1.14.0)
   - YogaKit (1.18.1):
     - Yoga (~> 1.14)
@@ -544,8 +544,8 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: b03032fdbdb725bea0bd9e5ec5a7272865ae7398
   RNCCheckbox: ed1b4ca295475b41e7251ebae046360a703b6eb5
   RNDeviceInfo: 0400a6d0c94186d1120c3cbd97b23abc022187a9
-  RNRoam: c99a465b04770a385438046763c8a700b438a360
-  roam-ios: 8626d4b6969f6a05e7aecb4019aaf529df82e32c
+  RNRoam: 1fc1fd39bc5887547202f4aed7f84665433ff36a
+  roam-ios: 099fb7dd2151829aab65454b770a76e957486364
   Yoga: e7dc4e71caba6472ff48ad7d234389b91dadc280
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
