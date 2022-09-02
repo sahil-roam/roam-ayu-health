@@ -31,6 +31,7 @@ import {Button, TextField, Loader} from './components';
 import {roam} from './services';
 import { RadioGroup } from 'react-native-radio-buttons-group';
 import CheckBox from '@react-native-community/checkbox';
+import RNFetchBlob from 'react-native-fetch-blob';
 
 const App: () => React$Node = () => {
   //States
@@ -54,6 +55,10 @@ const App: () => React$Node = () => {
   const [listenUpdatesTripStatus, setTripListenUpdatesStatus] = useState('-');
   const [updateCoutner, setUpdateCounter] = useState(0);
   const [tripUpdateCoutner, setTripUpdateCounter] = useState(0);
+  const [tripListener, setTripListener] = useState('');
+  const [tripResponse, setTripResponse] = useState('');
+  const [tripSummaryResponse, setTripSummaryResponse] = useState('')
+  
 
   // Permissions
   const [permissions, setPermissions] = useReducer(
@@ -92,19 +97,13 @@ const App: () => React$Node = () => {
       Roam.isLocationTracking(setTrackingStatus);
       onCheckPermissions();
     } 
-    Roam.resetBatchReceiverConfig(success => {
-      console.log(JSON.stringify(success))
-    },
-    error => {
-      console.log(JSON.stringify(error))
-    })
-      // Roam.setBatchReceiverConfig(Roam.NetworkState.BOTH, 4, 10,
-      //   success => {
-      //     console.log(JSON.stringify(success))
-      //   },
-      //   error => {
-      //     console.log(JSON.stringify(error))
-      //   })
+    // Roam.resetBatchReceiverConfig(success => {
+    //   console.log(JSON.stringify(success))
+    // },
+    // error => {
+    //   console.log(JSON.stringify(error))
+    // })
+      
    
   }, [initialized, onCheckPermissions, setUserId, setTripId]);
 
@@ -132,6 +131,7 @@ const App: () => React$Node = () => {
 
   const onGetTripSummaryPress = () => {
     const handleGetTripSummaryCallback = async success => {
+      setTripSummaryResponse(JSON.stringify(success))
       setTripSummaryStatus('SUCCESS');
       setDistanceCovered(success.distanceCovered);
       setDuration(success.duration);
@@ -179,6 +179,18 @@ const App: () => React$Node = () => {
     }
   };
 
+  const exportToStorage = () => {
+    const downloadDir = Platform.OS === 'ios' ? fs.dirs['MainBundleDir'] : fs.dirs['SDCardApplicationDir']
+    const filename = `${tripId}.txt`
+    const pathToWrite = `${downloadDir}/${filename}`
+    RNFetchBlob.fs
+    .writeFile(pathToWrite, tripSummaryResponse, 'utf8')
+    .then(() => {
+      setTripListener('Trip Summary Exported')
+      console.log('Exported')
+    })
+  }
+
   const onCheckPermissions = useCallback(async () => {
     let {locationServicesNeeded, backgroundLocationNeeded} = permissions;
 
@@ -221,7 +233,18 @@ const App: () => React$Node = () => {
   
 
   const startTracking = () => {
+    if(Platform.OS === 'android'){
+      Roam.setForegroundNotification(
+        true,
+        "Roam Example",
+        "Tap to open",
+        "mipmap/ic_launcher",
+        "com.roamexample.MainActivity",
+        "com.roamexample.RoamForegroundService"
+      )
+    }
     Roam.publishAndSave(null);
+    
         Roam.offlineLocationTracking(true)
         switch(trackingMode){
 
@@ -246,7 +269,7 @@ const App: () => React$Node = () => {
                   Roam.DesiredAccuracyIOS.BEST,
                   true,
                   0,
-                  50,
+                  parseInt(accuracyFilter),
                   parseInt(timeInterval)
                 )
               } else {
@@ -263,11 +286,11 @@ const App: () => React$Node = () => {
                   Roam.DesiredAccuracyIOS.BEST,
                   true,
                   parseInt(distanceInterval),
-                  50,
+                  parseInt(accuracyFilter),
                   0
                 )
               } else {
-                Roam.startTrackingDistanceInterval(parseInt(distanceInterval), 20, Roam.DesiredAccuracy.HIGH)
+                Roam.startTrackingDistanceInterval(parseInt(distanceInterval), parseInt(stopDuration), Roam.DesiredAccuracy.HIGH)
               }
             break;
 
@@ -281,8 +304,48 @@ const App: () => React$Node = () => {
   }
 
   const stopTracking = () => {
+    if(Platform.OS === 'android'){
+      Roam.setForegroundNotification(
+        false,
+        "Roam Example",
+        "Tap to open",
+        "mipmap/ic_launcher",
+        "com.roamexample.MainActivity",
+        "com.roamexample.RoamForegroundService"
+      )
+    }
     Roam.stopPublishing();
         Roam.stopTracking();
+  }
+
+  const startTrip = () => {
+    Roam.startTrip(tripId, 'test-trip', success => {
+      console.log(JSON.stringify(success))
+      setTripResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setTripResponse(JSON.stringify(error))
+    })
+  }
+
+  const stopTrip = () => {
+    Roam.stopTrip(tripId, success => {
+      console.log(JSON.stringify(success))
+      setTripResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setTripResponse(JSON.stringify(error))
+    })
+  }
+
+  const syncTrip = () => {
+    Roam.syncTrip(tripId, success => {
+      console.log(JSON.stringify(success))
+      setTripResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setTripResponse(JSON.stringify(error))
+    })
   }
 
   const onToggleTrip = () => {
@@ -414,6 +477,13 @@ const App: () => React$Node = () => {
   const [timeInterval, setTimeInterval] = useState('5')
   const [distanceInterval, setDistanceInterval] = useState('10')
   const [stationaryInterval, setStationaryInterval] = useState('0')
+  const [stopDuration, setStopDuration] = useState('20')
+  const [accuracyFilter, setAccuracyFilter] = useState('5')
+  const [batchResponse, setBatchResponse] = useState('')
+  const [batchCount, setBatchCount] = useState('')
+  const [batchWindow, setBatchWindow] = useState('')
+  const [networkState, setNetworkState] = useState(Roam.NetworkState.BOTH)
+
   
 
   const setTrackingConfig = (accuracy, timeout, discardLocation, source) => {
@@ -448,6 +518,36 @@ const App: () => React$Node = () => {
   }
 
 
+  const setBatchConfig = () => {
+    Roam.setBatchReceiverConfig(networkState, parseInt(batchCount), parseInt(batchWindow), success => {
+      console.log(JSON.stringify(success))
+      setBatchResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setBatchResponse(JSON.stringify(error))
+    } )
+  }
+
+  const getBatchConfig = () => {
+    Roam.getBatchReceiverConfig(success => {
+      console.log(JSON.stringify(success))
+      setBatchResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setBatchResponse(JSON.stringify(error))
+    })
+  }
+
+  const resetBatchConfig = () => {
+    Roam.resetBatchReceiverConfig(success => {
+      console.log(JSON.stringify(success))
+      setBatchResponse(JSON.stringify(success))
+    }, error => {
+      console.log(JSON.stringify(error))
+      setBatchResponse(JSON.stringify(error))
+    })
+  }
+
 
   const resetTrackingConfig = () => {
     Roam.resetTrackingConfig(success => {
@@ -468,6 +568,7 @@ const App: () => React$Node = () => {
       console.log('Trip Location', tripLocation);
       let METADATA = {'METADATA': {'tripId': tripLocation.tripId, 'distance': tripLocation.distance, 'duration': tripLocation.duration, 'tripState': 'ongoing'}}
       Roam.publishAndSave(METADATA)
+      setTripListener(JSON.stringify(tripLocation))
       setTripUpdateCounter(count => count + 1);
     });
     setTripListenUpdatesStatus('Enabled');
@@ -615,6 +716,56 @@ const App: () => React$Node = () => {
           </View>
 
           <View style={styles.sectionContainer}>
+          <Text style={styles.title}>Batch Config</Text>
+          <Text style={styles.counter}>Batch Response: {batchResponse}</Text>
+          <View style={styles.row}>
+              <Text>Batch Count</Text>
+              <TextInput 
+              style={styles.input}
+              value={batchCount}
+              onChangeText={(value) => setBatchCount(value)}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text>Batch Window</Text>
+              <TextInput 
+              style={styles.input}
+              value={batchWindow}
+              onChangeText={(value) => setBatchWindow(value)}
+              />
+            </View>
+            <Text style={styles.title}>Network State: {networkState}</Text>
+            <View style={styles.row}>
+              <Button onPress={() => {
+                setNetworkState(Roam.NetworkState.BOTH)
+              }}>BOTH</Button>
+              <Button onPress={() => {
+                setNetworkState(Roam.NetworkState.ONLINE)
+              }}>ONLINE</Button>
+              <Button onPress={() => {
+                setNetworkState('OFFLINE')
+              }}>OFFLINE</Button>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={() => {
+                setBatchConfig()
+              }}>Set batch config</Button>
+            </View>
+            <View style={styles.row}>
+            <Button onPress={() => {
+                getBatchConfig()
+              }}>Get batch config</Button>
+            </View>
+            <View style={styles.row}>
+            <Button onPress={() => {
+                resetBatchConfig()
+              }}>Reset batch config</Button>
+            </View>
+            
+              
+          </View>
+
+          <View style={styles.sectionContainer}>
           <Text style={styles.title}>Tracking Mode</Text>
           <Text style={styles.counter}>Current Tracking Mode: {trackingMode}</Text>
           <Button onPress={() => {setTrackingMode('ACTIVE')}}>ACTIVE</Button>
@@ -636,6 +787,22 @@ const App: () => React$Node = () => {
               style={styles.input}
               value={distanceInterval}
               onChangeText={(value) => setDistanceInterval(value)}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text>Stop Duration (Android)</Text>
+              <TextInput 
+              style={styles.input}
+              value={stopDuration}
+              onChangeText={(value) => setStopDuration(value)}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text>Accuracy (iOS)</Text>
+              <TextInput 
+              style={styles.input}
+              value={accuracyFilter}
+              onChangeText={(value) => setAccuracyFilter(value)}
               />
             </View>
           </View>
@@ -691,6 +858,9 @@ const App: () => React$Node = () => {
           </View>
           <View style={styles.sectionContainer}>
             <Text style={styles.title}>Trips</Text>
+            <Text style={styles.counter}>
+              Trip Response : {tripResponse}
+            </Text>
             <View style={styles.row}>
               <Button onPress={onCreateTripPress}>Create test trip</Button>
               <TextField>
@@ -706,17 +876,30 @@ const App: () => React$Node = () => {
               <TextField>{listenUpdatesTripStatus}</TextField>
             </View>
             <View style={styles.row}>
-              <Button onPress={onToggleTrip}>Toggle Trip</Button>
-              <TextField>{tripTrackingStatus}</TextField>
+              <Button onPress={startTrip}>Start Trip</Button>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={stopTrip}>Stop Trip</Button>
+            </View>
+            <View style={styles.row}>
+              <Button onPress={syncTrip}>Sync Trip</Button>
             </View>
             <View style={styles.row}>
               <Button onPress={onGetTripSummaryPress}>Get trip summary</Button>
               <TextField>{tripSummaryStatus}</TextField>
             </View>
+            <View style={styles.row}>
+              <Button onPress={exportToStorage}>Export Trip Summary</Button>
+            </View>
           </View>
           <View style={styles.sectionContainer}>
             <Text style={styles.counter}>
               Trip updates: {tripUpdateCoutner}
+            </Text>
+          </View>
+          <View style={styles.sectionContainer}>
+            <Text style={styles.counter}>
+              Trip Listener: {tripListener}
             </Text>
           </View>
           <View style={styles.sectionContainer}>
