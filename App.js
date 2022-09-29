@@ -34,6 +34,7 @@ import CheckBox from '@react-native-community/checkbox';
 import RNFetchBlob from 'react-native-fetch-blob';
 
 const App: () => React$Node = () => {
+
   //States
   const appStateRef = useRef(AppState.currentState);
   const [initialized, setInitialized] = useState(false);
@@ -76,6 +77,37 @@ const App: () => React$Node = () => {
     state => state,
   );
 
+  const trackingSourceRadioData = [{
+    id: '1',
+    label: 'ALL',
+    value: 'ALL'
+  },{
+    id: '2',
+    label: 'LAST_KNOWN',
+    value: 'LAST_KNOWN'
+  },{
+    id: '3',
+    label: 'GPS',
+    value: 'GPS'
+  }]
+
+  const [sourceRadioButtons, setSourceRadioButtons] = useState(trackingSourceRadioData)
+  const [discardLocation, setDiscardLocation] = useState(true)
+  const [trackingConfigResponse, setTrackingConfigResponse] = useState('')
+  const [trackingAccuracy, setTrackingAccuracy] = useState('10')
+  const [trackingTimeout, setTrackingTimeout] = useState('10')
+  const [selectedSource, setSelectedSource] = useState({value: 'ALL'})
+  const [trackingMode, setTrackingMode] = useState('ACTIVE')
+  const [timeInterval, setTimeInterval] = useState('5')
+  const [distanceInterval, setDistanceInterval] = useState('10')
+  const [stationaryInterval, setStationaryInterval] = useState('0')
+  const [stopDuration, setStopDuration] = useState('20')
+  const [accuracyFilter, setAccuracyFilter] = useState('5')
+  const [batchResponse, setBatchResponse] = useState('')
+  const [batchCount, setBatchCount] = useState('')
+  const [batchWindow, setBatchWindow] = useState('')
+  const [networkState, setNetworkState] = useState(Roam.NetworkState.BOTH)
+
   //Initial configuration
   useEffect(() => {
     if (!initialized) {
@@ -94,15 +126,8 @@ const App: () => React$Node = () => {
         Roam.allowMockLocation(true);
       }
       Roam.enableAccuracyEngine();
-      Roam.isLocationTracking(setTrackingStatus);
       onCheckPermissions();
     } 
-    // Roam.resetBatchReceiverConfig(success => {
-    //   console.log(JSON.stringify(success))
-    // },
-    // error => {
-    //   console.log(JSON.stringify(error))
-    // })
       
    
   }, [initialized, onCheckPermissions, setUserId, setTripId]);
@@ -124,73 +149,8 @@ const App: () => React$Node = () => {
     };
   }, [onCheckPermissions]);
 
-  // Actions
-  const onCreateUserPress = () => {
-    roam.createTestUser().then(setUserId);
-  };
 
-  const onGetTripSummaryPress = () => {
-    const handleGetTripSummaryCallback = async success => {
-      setTripSummaryResponse(JSON.stringify(success))
-      setTripSummaryStatus('SUCCESS');
-      setDistanceCovered(success.distanceCovered);
-      setDuration(success.duration);
-      setElevationGain(success.elevationGain);
-      setRouteCount(success.route.length);
-    };
-
-    const handleGetTripSummaryError = error => {
-      setTripSummaryStatus('ERROR');
-    };
-    Roam.getTripSummary(
-      tripId,
-      handleGetTripSummaryCallback,
-      handleGetTripSummaryError,
-    );
-  };
-
-  const onCreateTripPress = () => {
-    roam.createTestTrip().then(setTripId);
-  };
-
-  const onLoadTestUser = () => {
-    console.log(`userID: ${userId}`)
-    roam
-      .loadTestUser(userId)
-      .then(setLoadedUserId)
-      .catch(error => {
-        if (error === roam.ErrorCodes.InvalidUserId) {
-          Alert.alert('Invalid user id', 'Please create a test user before');
-        }
-      });
-  };
-
-  const onRequestPermission = type => {
-    switch (type) {
-      case 'location':
-        Roam.requestLocationPermission();
-        break;
-      case 'locationServices':
-        Roam.requestLocationServices();
-        break;
-      case 'backgroundLocation':
-        Roam.requestBackgroundLocationPermission();
-        break;
-    }
-  };
-
-  const exportToStorage = () => {
-    const downloadDir = Platform.OS === 'ios' ? fs.dirs['MainBundleDir'] : fs.dirs['SDCardApplicationDir']
-    const filename = `${tripId}.txt`
-    const pathToWrite = `${downloadDir}/${filename}`
-    RNFetchBlob.fs
-    .writeFile(pathToWrite, tripSummaryResponse, 'utf8')
-    .then(() => {
-      setTripListener('Trip Summary Exported')
-      console.log('Exported')
-    })
-  }
-
+  //Check Permission
   const onCheckPermissions = useCallback(async () => {
     let {locationServicesNeeded, backgroundLocationNeeded} = permissions;
 
@@ -230,6 +190,134 @@ const App: () => React$Node = () => {
     }
   }, [permissions]);
 
+  //Request Permission
+  const onRequestPermission = type => {
+    switch (type) {
+      case 'location':
+        Roam.requestLocationPermission();
+        break;
+      case 'locationServices':
+        Roam.requestLocationServices();
+        break;
+      case 'backgroundLocation':
+        Roam.requestBackgroundLocationPermission();
+        break;
+    }
+  };
+
+  //Create User
+  const onCreateUserPress = () => {
+    roam.createTestUser().then((response) => setUserId(response.userId));
+  };
+
+  //Load User
+  const onLoadTestUser = () => {
+    roam
+      .loadTestUser(userId)
+      .then(response => {
+        setLoadedUserId(response.userId)
+        console.log(response.userId)
+      })
+      .catch(error => {
+        if (error.errorCode === roam.ErrorCodes.InvalidUserId) {
+          Alert.alert('Invalid user id', 'Please create a test user before');
+        }
+      });
+  };
+
+
+  //Set Tracking Config
+  const setTrackingConfig = (accuracy, timeout, discardLocation, source) => {
+      roam.setTrackingConfig(accuracy, timeout, Platform.OS === 'android' ? source : null, discardLocation)
+      .then(success => {
+        console.log(JSON.stringify(success))
+        setTrackingConfigResponse(JSON.stringify(success))
+      })
+      .catch(error => {
+        console.log(JSON.stringify(error))
+        setTrackingConfigResponse(JSON.stringify(error))
+      })
+  }
+
+  const getTrackingConfig = () => {
+    roam.getTrackingConfig()
+    .then(success => {
+      console.log(JSON.stringify(success))
+      setTrackingConfigResponse(JSON.stringify(success))
+    })
+    .catch(error => {
+      console.log(JSON.stringify(error))
+      setTrackingConfigResponse(JSON.stringify(error))
+    })
+  }
+
+  const resetTrackingConfig = () => {
+    roam.resetTrackingConfig()
+    .then(success => {
+      console.log(JSON.stringify(success))
+      setTrackingConfigResponse(JSON.stringify(success))
+    })
+    .catch(error => {
+      console.log(JSON.stringify(error))
+      setTrackingConfigResponse(JSON.stringify(error))
+    })
+  }
+
+
+
+  //Trip Summary
+  const onGetTripSummaryPress = () => {
+    const handleGetTripSummaryCallback = async success => {
+      setTripSummaryResponse(JSON.stringify(success))
+      setTripSummaryStatus('SUCCESS');
+      setDistanceCovered(success.distanceCovered);
+      setDuration(success.duration);
+      setElevationGain(success.elevationGain);
+      setRouteCount(success.route.length);
+    };
+    const handleGetTripSummaryError = error => {
+      setTripSummaryStatus('ERROR');
+      setTripSummaryResponse(JSON.stringify(error))
+    };
+    Roam.getTripSummary(
+      tripId,
+      handleGetTripSummaryCallback,
+      handleGetTripSummaryError,
+    );
+  };
+
+  const onCreateTripPress = () => {
+      Roam.createTrip(true, success => {
+        console.log(JSON.stringify(success))
+        AsyncStorage.setItem('tripId', success.id);
+        setTripId(success.id)
+        setTripResponse(JSON.stringify(success))
+      }, error => {
+        console.log(JSON.stringify(error))
+        setTripResponse(JSON.stringify(error))
+      });
+  };
+
+  
+
+  
+
+  const exportToStorage = () => {
+    const { fs } = RNFetchBlob
+    const DownloadDir = Platform.OS === 'ios' ? fs.dirs['MainBundleDir'] : fs.dirs['SDCardApplicationDir']
+    const filename = `${tripId}.txt`
+    const pathToWrite = `${DownloadDir}/${filename}`
+    RNFetchBlob.fs
+    .writeFile(pathToWrite, tripSummaryResponse, 'utf8')
+    .then(() => {
+      setTripListener('Trip Summary Exported')
+      console.log('Exported')
+    }).catch( e => {
+      console.log(e)
+    })
+  }
+
+  
   
 
   const startTracking = () => {
@@ -319,13 +407,16 @@ const App: () => React$Node = () => {
   }
 
   const startTrip = () => {
-    Roam.startTrip(tripId, 'test-trip', success => {
-      console.log(JSON.stringify(success))
-      setTripResponse(JSON.stringify(success))
-    }, error => {
-      console.log(JSON.stringify(error))
-      setTripResponse(JSON.stringify(error))
-    })
+    //setTimeout(() => {
+      //startTracking()
+      Roam.startTrip(tripId, 'test-trip', success => {
+        console.log(JSON.stringify(success))
+        setTripResponse(JSON.stringify(success))
+      }, error => {
+        console.log(JSON.stringify(error))
+        setTripResponse(JSON.stringify(error))
+      })
+    //}, 90000)
   }
 
   const stopTrip = () => {
@@ -453,69 +544,11 @@ const App: () => React$Node = () => {
     setListenUpdatesStatus('Enabled');
   };
 
-  const trackingSourceRadioData = [{
-    id: '1',
-    label: 'ALL',
-    value: 'ALL'
-  },{
-    id: '2',
-    label: 'LAST_KNOWN',
-    value: 'LAST_KNOWN'
-  },{
-    id: '3',
-    label: 'GPS',
-    value: 'GPS'
-  }]
-
-  const [sourceRadioButtons, setSourceRadioButtons] = useState(trackingSourceRadioData)
-  const [discardLocation, setDiscardLocation] = useState(true)
-  const [trackingConfigResponse, setTrackingConfigResponse] = useState('')
-  const [trackingAccuracy, setTrackingAccuracy] = useState('10')
-  const [trackingTimeout, setTrackingTimeout] = useState('10')
-  const [selectedSource, setSelectedSource] = useState({value: 'ALL'})
-  const [trackingMode, setTrackingMode] = useState('ACTIVE')
-  const [timeInterval, setTimeInterval] = useState('5')
-  const [distanceInterval, setDistanceInterval] = useState('10')
-  const [stationaryInterval, setStationaryInterval] = useState('0')
-  const [stopDuration, setStopDuration] = useState('20')
-  const [accuracyFilter, setAccuracyFilter] = useState('5')
-  const [batchResponse, setBatchResponse] = useState('')
-  const [batchCount, setBatchCount] = useState('')
-  const [batchWindow, setBatchWindow] = useState('')
-  const [networkState, setNetworkState] = useState(Roam.NetworkState.BOTH)
+  
 
   
 
-  const setTrackingConfig = (accuracy, timeout, discardLocation, source) => {
-    console.log(`accuracy: ${accuracy} timeout: ${timeout} discardLocation: ${discardLocation} source: ${source}`)
-    if(Platform.OS === 'android'){
-      Roam.setTrackingConfig(parseInt(accuracy), parseInt(timeout), source, discardLocation, success => {
-        console.log(JSON.stringify(success))
-        setTrackingConfigResponse(JSON.stringify(success))
-      }, error => {
-        console.log(JSON.stringify(error))
-        setTrackingConfigResponse(JSON.stringify(error))
-      })
-    } else {
-      Roam.setTrackingConfig(parseInt(accuracy), parseInt(timeout), null, discardLocation, success => {
-        console.log(JSON.stringify(success))
-        setTrackingConfigResponse(JSON.stringify(success))
-      }, error => {
-        console.log(JSON.stringify(error))
-        setTrackingConfigResponse(JSON.stringify(error))
-      })
-    }
-  }
-
-  const getTrackingConfig = () => {
-    Roam.getTrackingConfig(success => {
-      console.log(JSON.stringify(success))
-      setTrackingConfigResponse(JSON.stringify(success))
-    }, error => {
-      console.log(JSON.stringify(error))
-      setTrackingConfigResponse(JSON.stringify(error))
-    })
-  }
+  
 
 
   const setBatchConfig = () => {
@@ -549,21 +582,13 @@ const App: () => React$Node = () => {
   }
 
 
-  const resetTrackingConfig = () => {
-    Roam.resetTrackingConfig(success => {
-      console.log(JSON.stringify(success))
-      setTrackingConfigResponse(JSON.stringify(success))
-    }, error => {
-      console.log(JSON.stringify(error))
-      setTrackingConfigResponse(JSON.stringify(error))
-    })
-  }
+  
 
   const onListenTripUpdates = () => {
-    if (tripSubscriptionStatus !== 'Enabled') {
-      Alert.alert('Error', 'Please, subscribe trip before');
-      return;
-    }
+    // if (tripSubscriptionStatus !== 'Enabled') {
+    //   Alert.alert('Error', 'Please, subscribe trip before');
+    //   return;
+    // }
     Roam.startListener('trip_status', tripLocation => {
       console.log('Trip Location', tripLocation);
       let METADATA = {'METADATA': {'tripId': tripLocation.tripId, 'distance': tripLocation.distance, 'duration': tripLocation.duration, 'tripState': 'ongoing'}}
@@ -909,6 +934,7 @@ const App: () => React$Node = () => {
               {'\n'}Duration: {duration}
               {'\n'}Elevation Gain: {elevationGain}
               {'\n'}Route Count: {routeCount}
+              {'\n'}{'\n'}JSON Response: {tripSummaryResponse}
             </Text>
           </View>
         </ScrollView>

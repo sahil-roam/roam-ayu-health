@@ -14,17 +14,18 @@ const ErrorCodes = {
   InvalidUserId: 'GS402',
 };
 
+
+//-------User-------
+
 const createTestUser = async () => {
   return new Promise((resolve, reject) => {
     const handleCreateUserCallback = async (success) => {
       AsyncStorage.setItem('userId', success.userId);
-      resolve(success.userId);
+      resolve(success);
     };
-
     const handleCreateUserError = (error) => {
       reject(error);
     };
-
     Roam.createUser(
       'test-user',
       handleCreateUserCallback,
@@ -32,6 +33,57 @@ const createTestUser = async () => {
     );
   });
 };
+
+const loadTestUser = async (id) => {
+  return new Promise((resolve, reject) => {
+    const handleLoadUserCallback = async (success) => {
+      resolve(success);
+    };
+    const handleLoadUserError = (error) => {
+      reject(error);
+    };
+    Roam.getUser(id, handleLoadUserCallback, handleLoadUserError);
+  });
+};
+
+
+//------Tracking Config-------
+
+const setTrackingConfig = async (accuracy, timeout, source, discardLocation) => {
+  return new Promise((resolve, reject) => {
+      Roam.setTrackingConfig(parseInt(accuracy), parseInt(timeout), source, discardLocation, success => {
+        resolve(success)
+      }, error => {
+        reject(error)
+      })
+  })
+}
+
+const getTrackingConfig = async () => {
+  return new Promise((resolve, reject) => {
+    Roam.getTrackingConfig(success => {
+      resolve(success)
+    }, error => {
+      reject(error)
+    })
+  })
+}
+
+const resetTrackingConfig = async () => {
+  return new Promise((resolve, reject) => {
+    Roam.resetTrackingConfig(success => {
+      resolve(success)
+    }, error => {
+      reject(error)
+    })
+  })
+}
+
+
+
+
+
+
 
 const createTestTrip = async () => {
   return new Promise((resolve, reject) => {
@@ -48,18 +100,7 @@ const createTestTrip = async () => {
   });
 };
 
-const loadTestUser = async (id) => {
-  return new Promise((resolve, reject) => {
-    const handleLoadUserCallback = async (success) => {
-      resolve(success.userId);
-    };
 
-    const handleLoadUserError = (error) => {
-      reject(error.errorCode);
-    };
-    Roam.getUser(id, handleLoadUserCallback, handleLoadUserError);
-  });
-};
 
 const toggleTrip = async (id, isOnGoing) => {
   return new Promise((resolve, reject) => {
@@ -133,6 +174,9 @@ export const roam = {
   loadTestUser,
   toggleTrip,
   getTripSummary,
+  setTrackingConfig,
   Configuration,
   ErrorCodes,
+  getTrackingConfig,
+  resetTrackingConfig
 };
