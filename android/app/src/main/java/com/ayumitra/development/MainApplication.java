@@ -1,10 +1,9 @@
-package com.roamexample;
+package com.ayumitra.development;
 
 import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
-import com.roam.reactnative.RNRoamPackage;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.ReactNativeHost;
 import com.facebook.react.ReactPackage;
@@ -46,7 +45,8 @@ public class MainApplication extends Application implements ReactApplication {
   public void onCreate() {
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
-    Roam.initialize(this, "3b4d1b9acd75008ebb6fb81d97508432907334309c49cf12351476e36c0d9a30");
+    //Roam.initialize(this, "3b4d1b9acd75008ebb6fb81d97508432907334309c49cf12351476e36c0d9a30");
+    Roam.initialize(this, "3bde3b6992d29d39a508596ca0e9c9c140c98f4e00a2a1afcad4836aeebc0823");
     initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
   }
 
@@ -65,7 +65,7 @@ public class MainApplication extends Application implements ReactApplication {
          We use reflection here to pick up the class that initializes Flipper,
         since Flipper library is not available in release mode
         */
-        Class<?> aClass = Class.forName("com.roamexample.ReactNativeFlipper");
+        Class<?> aClass = Class.forName("com.ayumitra.development.ReactNativeFlipper");
         aClass
             .getMethod("initializeFlipper", Context.class, ReactInstanceManager.class)
             .invoke(null, context, reactInstanceManager);

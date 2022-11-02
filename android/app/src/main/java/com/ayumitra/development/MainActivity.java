@@ -1,6 +1,5 @@
-package com.roamexample;
+package com.ayumitra.development;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import com.facebook.react.ReactActivity;

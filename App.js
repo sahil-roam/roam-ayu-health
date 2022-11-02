@@ -268,6 +268,7 @@ const App: () => React$Node = () => {
   //Trip Summary
   const onGetTripSummaryPress = () => {
     const handleGetTripSummaryCallback = async success => {
+      console.log(JSON.stringify(success))
       setTripSummaryResponse(JSON.stringify(success))
       setTripSummaryStatus('SUCCESS');
       setDistanceCovered(success.distanceCovered);
@@ -287,8 +288,14 @@ const App: () => React$Node = () => {
   };
 
   const onCreateTripPress = () => {
+    //startTracking()
+    console.log('create trip press')
+    setTimeout(() => {
       Roam.createTrip(true, success => {
         console.log(JSON.stringify(success))
+        onSubscribeTrip(success.id)
+        onListenTripUpdates()
+        startTrip(success.id)
         AsyncStorage.setItem('tripId', success.id);
         setTripId(success.id)
         setTripResponse(JSON.stringify(success))
@@ -296,9 +303,12 @@ const App: () => React$Node = () => {
         console.log(JSON.stringify(error))
         setTripResponse(JSON.stringify(error))
       });
+    }, 50000)
+      
   };
 
-  
+  //14:46:23
+  //14:47:13
 
   
 
@@ -327,8 +337,8 @@ const App: () => React$Node = () => {
         "Roam Example",
         "Tap to open",
         "mipmap/ic_launcher",
-        "com.roamexample.MainActivity",
-        "com.roamexample.RoamForegroundService"
+        "com.ayumitra.development.MainActivity",
+        "com.ayumitra.development.RoamForegroundService"
       )
     }
     Roam.publishAndSave(null);
@@ -383,6 +393,7 @@ const App: () => React$Node = () => {
             break;
 
         }
+        
 
   }
 
@@ -398,18 +409,18 @@ const App: () => React$Node = () => {
         "Roam Example",
         "Tap to open",
         "mipmap/ic_launcher",
-        "com.roamexample.MainActivity",
-        "com.roamexample.RoamForegroundService"
+        "com.ayumitra.development.MainActivity",
+        "com.ayumitra.development.RoamForegroundService"
       )
     }
     Roam.stopPublishing();
         Roam.stopTracking();
   }
 
-  const startTrip = () => {
+  const startTrip = (tripID) => {
     //setTimeout(() => {
       //startTracking()
-      Roam.startTrip(tripId, 'test-trip', success => {
+      Roam.startTrip(tripID, 'test-trip', success => {
         console.log(JSON.stringify(success))
         setTripResponse(JSON.stringify(success))
       }, error => {
@@ -517,14 +528,14 @@ const App: () => React$Node = () => {
     Roam.subscribe('LOCATION', loadedUserId);
     setSubscriptionStatus('Enabled');
   };
-  const onSubscribeTrip = () => {
-    if (typeof tripId === 'undefined') {
-      Alert.alert('Invalid trip id', 'Please create a test trip before');
-      return;
-    }
+  const onSubscribeTrip = (tripID) => {
+    // if (typeof tripID === 'undefined') {
+    //   Alert.alert('Invalid trip id', 'Please create a test trip before');
+    //   return;
+    // }
 
-    console.log(`tripID before subscribe: ${tripId}`)
-    Roam.subscribeTripStatus(tripId);
+    console.log(`tripID before subscribe: ${tripID}`)
+    Roam.subscribeTripStatus(tripID);
     setTripSubscriptionStatus('Enabled');
   };
 

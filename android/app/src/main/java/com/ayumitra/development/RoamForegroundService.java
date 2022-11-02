@@ -1,4 +1,4 @@
-package com.roamexample;
+package com.ayumitra.development;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -14,7 +14,6 @@ import android.os.IBinder;
 import androidx.annotation.RequiresApi;
 
 import com.roam.reactnative.RNRoamReceiver;
-import com.roam.sdk.service.RoamReceiver;
 
 public class RoamForegroundService extends Service {
 
